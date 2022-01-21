@@ -1,0 +1,168 @@
+---
+title: "01_Data management_02_visualization"
+author: "Hyemin Park(`hyemin.park@snu.ac.kr`)"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+### Start with clean state
+gc(); rm(list=ls())
+
+
+### Set working directory and data directory
+work_dir <- c("D:/HYEM'S/GraduatedSchool/PROJECTS/MyProjects/Emotions")
+data_dir <- file.path(work_dir, "datasets","outputs")
+#knitr::opts_knit$set(root.dir = "work_dir")
+
+
+### Call libraries
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(readr)
+
+
+### Set file path
+file_path <- file.path(data_dir, "phm_datamanagement01.1.14.csv")
+df <- read_csv(file = file_path) %>% tibble()
+```
+
+
+## 0. check data
+### 00.data set
+```{r}
+df <- df[,-1]
+df
+```
+### 01. missing values
+```{r}
+
+sum(is.na(df))
+sum(is.na(df[1:7]))
+sum(is.na(df[8:99]))
+sum(is.na(df[100:127]))
+
+colSums(is.na(df[1:7]))
+colSums(is.na(df[100:127]))
+
+```
+
+
+
+## 1. bar charts
+
+```{r bar codes}
+### select items: Internalization
+items1 <- select(df, c("ID",starts_with("LI")))
+items2 <- select(df, c("ID",starts_with("PEI")))
+items3 <- select(df, c("ID",starts_with("PGI")))
+items4 <- select(df, c("ID",starts_with("IDI")))
+items5 <- select(df, c("ID","RACE","SEX","SEX_ORIENT", starts_with("INI")))
+
+
+### Transform the items
+items1_bar <- items1 %>% gather(key='Question_num', value='Answer', -ID)
+items2_bar <- items2 %>% gather(key='Question_num', value='Answer', -ID)
+items3_bar <- items3 %>% gather(key='Question_num', value='Answer', -ID)
+items4_bar <- items4 %>% gather(key='Question_num', value='Answer', -ID)
+items5_bar <- items5 %>% gather(key='Question_num', value='Answer', -ID)
+
+
+### Draw a stacked bar chart with items2
+plot1 <- ggplot(items1_bar, aes(x=Question_num)) +
+  geom_bar(aes(fill=Answer))
+
+
+### Change options wth items2
+plot2 <- ggplot(items2_bar, aes(x=Question_num)) +
+  geom_bar(aes(fill=Answer)) +
+  scale_fill_manual(values= c ("Cadetblue", "Dark gray","orange","Pink","Sky Blue")) +
+  theme(axis.title = element_text (face = "plain", size = 15, color = "black"),
+        axis.text.x = element_text(size=50),
+        strip.text.x = element_text(size = 5)) +
+  scale_y_continuous(expand=expansion(0)) +
+  labs(
+    title='My Likert Plot', subtitle='hello',
+    x='questions', y='Number Answered'
+  ) +
+  theme_classic() +
+  theme(legend.position='top') +
+  coord_flip()
+
+
+### Change to percentage with items3 and items4
+items3.4_bar <- rbind(items3_bar, items4_bar)
+plot3 <- ggplot(items3.4_bar, aes(x=Question_num)) +
+  geom_bar(aes(fill=Answer), position="fill") +
+  scale_fill_brewer(palette='Spectral', direction=-1) +
+  scale_y_continuous(expand=expansion(0), labels=scales::percent_format()) +
+  labs(
+    title='My Likert Plot', subtitle='Twenty Questions!',
+    x='Questions', y='Number Answered'
+  ) +
+  theme_classic() +
+  theme(legend.position='top') +
+  coord_flip()
+##reorder function
+##tidyr -> pibutlonger, pibutwider
+
+###  items5
+plot4 <- ggplot(items5, aes(x=RACE, y=INI1_KNOWPURPOSE))+
+  geom_bar(position="stack", stat="identity")
+
+plot5 <- ggplot(items5, aes(x=SEX, y=INI1_KNOWPURPOSE))+
+  geom_bar(position="stack", stat="identity")
+
+plot6 <- ggplot(items5, aes(x=SEX_ORIENT, y=INI1_KNOWPURPOSE))+
+  geom_bar(position="stack", stat="identity")
+
+
+```
+  
+
+```{r bars}
+### show plots
+plot1
+plot2
+plot3
+plot4
+plot5
+plot6
+```
+
+
+```
+## LESSONS  
+  
+  1. basics  
+  - Shortcut keys of a code chunk in window is `Ctrl'+'Alt'+'i`  
+  - Rmarkdown used grammar of markdown  
+    + '`words`': empathize words  
+    + '*italic*' or '_italics_': italic  
+    + '**bold**' or '__bold__': bold  
+    + '~~strikethrough~~': strikethrough  
+    + '[insert link, name](https://www.linkedin.com/in/hyemin-park-285a43204/)': insert hiperlink. put actual web address in ()  
+    + '![insert figure, name if wanted](https://www.google.com/url?sa=i&url=https%3A%2F%2Fblankspace-dev.tistory.com%2F200&psig=AOvVaw31lyxHYgIzbJse7aN1NdWK&ust=1642154942759000&source=images&cd=vfe&ved=2ahUKEwjGxcCBvq71AhWFVPUHHTlgDkwQr4kDegUIARDTAQ)': insert figure. put working directory in the computer or web address in ()  
+    
+  2. upgrades and data analysis  
+  - code chunk option -> {r setup, `include=FALSE`}  
+  this chunk is included in the R documents but not printed usually when we import libraries and data  
+  - write mathematical expressions with LaTex codes  
+    [tutorial](https://latex-tutorial.com/tutorials/amsmath/),
+    [tutoria2](https://velog.io/@d2h10s/LaTex-Markdown-%EC%88%98%EC%8B%9D-%EC%9E%91%EC%84%B1%EB%B2%95),
+    [tutoria3](https://rpruim.github.io/s341/S19/from-class/MathinRmd.html)
+    
+  3. html/pdf/word, presentation useing Rmarkdown
+  - put "knitr::opts_chunk$set(echo=FALSE)" in code chunk, then any code will not be shown in the ppt  
+  - "## title" is a sile
+  
+  4.use cheat sheet 
+
+```
+
+
